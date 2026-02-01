@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tempo Native Swap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        select, input, button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        button { background: #38bdf8; color: #0f172a; font-weight: bold; border: none; cursor: pointer; }
+        .status { font-size: 12px; color: #94a3b8; margin-top: 10px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Tempo Zero-Fee Swap</h2>
+        <input id="amt" type="number" placeholder="0.00">
+        <select id="tIn">
+            <option value="0x20c0000000000000000000000000000000000000">pathUSD</option>
+            <option value="0x20c0000000000000000000000000000000000001">AlphaUSD</option>
+        </select>
+        <select id="tOut">
+            <option value="0x20c0000000000000000000000000000000000001">AlphaUSD</option>
+            <option value="0x20c0000000000000000000000000000000000002">BetaUSD</option>
+        </select>
+        <button onclick="swap()">Swap Now</button>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const CONTRACT_ADDRESS = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+        const ABI = ["function swap(address tIn, address tOut, uint256 a) external"];
+
+        async function swap() {
+            const status = document.getElementById('status');
+            if (!window.ethereum) return alert("Open this in MetaMask Browser!");
+            
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            
+            try {
+                const amount = ethers.utils.parseUnits(document.getElementById('amt').value, 6);
+                const tx = await contract.swap(document.getElementById('tIn').value, document.getElementById('tOut').value, amount);
+                status.innerText = "Processing: " + tx.hash;
+                await tx.wait();
+                status.innerText = "Swap Successful!";
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
+Initial deploy
